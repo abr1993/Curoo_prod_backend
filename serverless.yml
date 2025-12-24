@@ -1,0 +1,47 @@
+service: express-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+  stage: prod
+  timeout: 30
+  memorySize: 1024
+
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: ${env:DATABASE_URL}
+    JWT_SECRET: ${env:JWT_SECRET}
+    STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
+    MJ_APIKEY_PUBLIC: ${env:MJ_APIKEY_PUBLIC}
+    MJ_APIKEY_PRIVATE: ${env:MJ_APIKEY_PRIVATE}
+    MAILJET_FROM_EMAIL: ${env:MAILJET_FROM_EMAIL}
+    VITE_BASE_URL: ${env:VITE_BASE_URL}
+    JWT_EXPIRATION: ${env:JWT_EXPIRATION}    
+    CONSULT_EXPIRE_HOURS: ${env:CONSULT_EXPIRE_HOURS}
+
+functions:
+  api:
+    handler: dist/server.handler
+    events:
+      - httpApi:
+          path: /api/{proxy+}
+          method: ANY                
+
+plugins:
+  - serverless-esbuild
+
+package:
+  patterns:
+    - node_modules/.prisma/**
+    - node_modules/@prisma/client/**
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node18
+    platform: node

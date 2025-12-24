@@ -1,0 +1,618 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+//////////////////////
+// ENUMS
+//////////////////////
+enum UserRole {
+  PATIENT
+  PROVIDER
+  SYSTEM
+}
+
+enum ConsultStatus {
+  ISDRAFT
+  SUBMITTED
+  ACCEPTED
+  ANSWERED
+  DECLINED
+  AUTO_DECLINED
+  TIMEDOUT  
+}
+
+enum ReportStatus{
+  ISDRAFT
+  COMPLETED
+}
+
+enum USState {
+  AL @map("Alabama")
+  AK @map("Alaska")
+  AZ @map("Arizona")
+  AR @map("Arkansas")
+  CA @map("California")
+  CO @map("Colorado")
+  CT @map("Connecticut")
+  DC @map("District of Columbia")
+  DE @map("Delaware")
+  FL @map("Florida")
+  GA @map("Georgia")
+  HI @map("Hawaii")
+  ID @map("Idaho")
+  IL @map("Illinois")
+  IN @map("Indiana")
+  IA @map("Iowa")
+  KS @map("Kansas")
+  KY @map("Kentucky")
+  LA @map("Louisiana")
+  ME @map("Maine")
+  MD @map("Maryland")
+  MA @map("Massachusetts")
+  MI @map("Michigan")
+  MN @map("Minnesota")
+  MS @map("Mississippi")
+  MO @map("Missouri")
+  MT @map("Montana")
+  NE @map("Nebraska")
+  NV @map("Nevada")
+  NH @map("New Hampshire")
+  NJ @map("New Jersey")
+  NM @map("New Mexico")
+  NY @map("New York")
+  NC @map("North Carolina")
+  ND @map("North Dakota")
+  OH @map("Ohio")
+  OK @map("Oklahoma")
+  OR @map("Oregon")
+  PA @map("Pennsylvania")
+  RI @map("Rhode Island")
+  SC @map("South Carolina")
+  SD @map("South Dakota")
+  TN @map("Tennessee")
+  TX @map("Texas")
+  UT @map("Utah")
+  VT @map("Vermont")
+  VA @map("Virginia")
+  WA @map("Washington")
+  WV @map("West Virginia")
+  WI @map("Wisconsin")
+  WY @map("Wyoming")  
+}
+
+
+enum Pronoun {
+  HE_HIM
+  SHE_HER
+  THEY_THEM
+}
+
+enum SexAtBirth {
+  MALE
+  FEMALE
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  SELECT
+  MULTISELECT
+}
+
+enum ConditionVisibilityType {
+  ONINFOPAGE
+  ONFORMPAGE
+  ONBOTH
+}
+
+
+enum NameVisibilityOption {
+  INITIALS_ONLY
+  FULL_NAME
+  ANONYMOUS
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum NotificationProvider {
+  MAILJET
+  TWILIO
+  AWS_SES
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum TemplateFormat {
+  TEXT
+  HTML
+}
+
+//////////////////////
+// MODELS
+//////////////////////
+model User {
+  id               String    @id @default(uuid())
+  role             UserRole
+  email            String?  @unique  
+  phone            String?  
+  
+  created_by       String?
+  created_date     DateTime  @default(now())
+  updated_by       String?
+  updated_date     DateTime? @updatedAt
+  deleted_date     DateTime?
+  otp               String?
+  otp_generated_date DateTime?
+  provider         Provider?
+  patient_consults  Consult[] @relation("PatientConsults")
+  provider_consults Consult[] @relation("ProviderConsults")
+  audit_logs        AuditLog[] @relation("Actor")
+}
+
+model Provider {
+  user_id        String   @id
+  display_name   String
+  avatar          String?
+  
+  is_available   Boolean  @default(true)  
+  
+  created_by     String?
+  created_date   DateTime  @default(now())
+  updated_by     String?
+  updated_date   DateTime? @updatedAt
+  deleted_date   DateTime?
+  
+  user          User @relation(fields: [user_id], references: [id])
+  specialties   ProviderSpecialty[]
+  licenses    ProviderLicense[]
+  out_of_office ProviderOutOfOffice[]
+}
+
+model ProviderOutOfOffice {
+  id            String   @id @default(uuid())
+  provider_id  String
+  ooo_start     DateTime
+  ooo_end       DateTime
+  created_by    String?
+  created_date  DateTime  @default(now())
+  updated_by    String?
+  updated_date  DateTime? @updatedAt
+  deleted_date  DateTime?
+
+  provider Provider @relation(fields: [provider_id], references: [user_id])
+}
+
+model ProviderSpecialty {
+  id String @id @default(uuid())
+  provider_experience_in_years Int @default(1)
+  provider_id String
+  specialty_id String
+  created_by   String?
+  created_date DateTime  @default(now())
+  updated_by   String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime?
+
+  provider Provider @relation(fields: [provider_id], references: [user_id])
+  specialty Specialty @relation(fields: [specialty_id], references: [id])
+  consult Consult[]
+
+  provider_license ProviderLicense[]
+  @@unique([provider_id, specialty_id], name: "provider_id_specialty_id")
+  
+}
+
+model ProviderLicense {
+  id String   @id @default(uuid())
+  provider_specialty_id String
+  provider_id String
+  //provider_experience_in_years Int @default(1)
+  state        USState
+  price_cents    Decimal? @db.Decimal(10,2)
+  is_available   Boolean  @default(true)
+  daily_cap      Int?
+  created_by   String?
+  created_date DateTime  @default(now())
+  updated_by   String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime?
+
+  provider_specialty ProviderSpecialty @relation(fields: [provider_specialty_id], references: [id])
+  provider Provider @relation(fields: [provider_id], references: [user_id])
+  
+  @@unique([provider_specialty_id, state], name: "provider_specialty_id_state")
+}
+
+model Specialty {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  description   String
+  themecolor    String?
+  created_by    String?
+  created_date  DateTime  @default(now())
+  updated_by    String?
+  updated_date  DateTime? @updatedAt
+  deleted_date  DateTime?
+
+  history_template_id String? @unique
+  // link to its dynamic history template
+  history_template SpecialtyForHistory? @relation("SpecialtyToHistoryTemplate", fields: [history_template_id], references: [id])
+
+  providers  ProviderSpecialty[]
+  symptoms   SpecialtySymptom[]
+  specialty_conditions SpecialtyCondition[]
+  specialty_reflags SpecialtyRedFlag[]
+}
+
+model SpecialtyForHistory {
+  id            String            @id @default(uuid())
+  name          String            @unique
+  description   String
+  created_by    String?
+  created_date  DateTime          @default(now())
+  updated_by    String?
+  updated_date  DateTime?         @updatedAt
+  deleted_date  DateTime?
+
+  // ✅ must use the same relation name here
+  specialty     Specialty? @relation("SpecialtyToHistoryTemplate")
+
+  // Configurable fields for this specialty
+  fields        HistoryField[]    @relation("SpecialtyToFields")
+
+  // All patient or consult histories for this specialty
+  consult_histories ConsultMedicalHistory[] @relation("SpecialtyToConsultHistories")
+}
+
+
+model HistoryField {
+  id           String             @id @default(uuid())
+  specialtyId  String
+  name         String             // e.g., "Eye history", "Systemic", "Medications"
+  type         FieldType          // e.g., SELECT, MULTISELECT, TEXT
+  isRequired   Boolean            @default(false)
+  order        Int?
+
+  specialty    SpecialtyForHistory @relation("SpecialtyToFields", fields: [specialtyId], references: [id])
+  options      HistoryFieldOption[] @relation("FieldToOptions")
+}
+
+model HistoryFieldOption {
+  id        String        @id @default(uuid())
+  fieldId   String
+  value     String        // e.g., "Glaucoma", "LASIK/PRK", "None"
+  field     HistoryField  @relation("FieldToOptions", fields: [fieldId], references: [id])
+}
+
+model Condition{
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime? 
+  
+  specialty_conditions SpecialtyCondition[]
+}
+
+model SpecialtyCondition{
+  id          String   @id @default(uuid())  
+  specialty_id String
+  condition_id String
+  order Int?
+  is_upload_allowed Boolean @default(false)
+  type ConditionVisibilityType @default(ONBOTH)
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime? 
+
+  specialty Specialty @relation(fields: [specialty_id], references: [id])
+  condition Condition @relation(fields: [condition_id], references: [id])
+
+  consult_specialty_condition ConsultSpecialtyCondition[]
+
+  @@unique([specialty_id, condition_id], name: "specialty_id_condition_id") 
+
+}
+
+model Symptom{
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime? 
+
+  specialty_symptoms SpecialtySymptom[]
+
+}
+
+model SpecialtySymptom{
+  id          String   @id @default(uuid())  
+  specialty_id String
+  symptom_id String
+  order Int?
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime? 
+
+  specialty Specialty @relation(fields: [specialty_id], references: [id])
+  symptom Symptom @relation(fields: [symptom_id], references: [id])
+
+  consult_specialty_symptoms ConsultSpecialtySymptom[]
+
+  @@unique([specialty_id, symptom_id], name: "specialty_id_symptom_id")
+
+}
+model ConsultSpecialtySymptom{
+  id          String   @id @default(uuid())
+  consult_id String
+  specialty_symptom_id String 
+  Value Int
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime? 
+
+  specialty_symptom SpecialtySymptom @relation(fields: [specialty_symptom_id], references: [id])
+  consult Consult @relation(fields: [consult_id], references: [id])
+  //@@unique([consult_id, specialty_symptom_id])
+
+}
+model ConsultSpecialtyCondition{
+  id          String   @id @default(uuid())
+  consult_id String
+  specialty_condition_id String   
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime? 
+
+  specialty_condition SpecialtyCondition @relation(fields: [specialty_condition_id], references: [id])
+  consult Consult @relation(fields: [consult_id], references: [id])
+  //@@unique([consult_id, specialty_condition_id])
+
+}
+
+model ConsultMedicalHistory {
+  id            String             @id @default(uuid())
+  consult_id    String  @unique
+  specialty_id  String             // references SpecialtyForHistory, not Specialty
+  data          Json               // e.g., { "Medications": "atenolol", "Systemic": ["Diabetes"] }
+  created_at    DateTime           @default(now())
+  updated_at    DateTime?          @updatedAt
+  deleted_date DateTime?
+  consult       Consult            @relation(fields: [consult_id], references: [id])
+  specialty     SpecialtyForHistory @relation("SpecialtyToConsultHistories", fields: [specialty_id], references: [id])
+}
+
+model Consult {
+  id                    String    @id @default(uuid())
+  patient_id            String
+  provider_id          String
+  provider_specialty_id String
+  state_at_service      String?
+  coverage_is_attested Boolean  @default(false)
+  has_red_flag         Boolean  @default(false)
+  question_body         String?
+  
+  date_of_birth         DateTime
+  pronoun          Pronoun?
+  sex_at_birth     SexAtBirth?
+  legal_name          String?
+  show_name_options   NameVisibilityOption @default(ANONYMOUS)
+  
+  status                ConsultStatus @default(ISDRAFT)
+  submitted_date          DateTime @default(now())
+  accepted_date           DateTime?
+  answered_date           DateTime?
+  declined_date           DateTime?
+  timed_out_date      DateTime? @map("auto_declined_date")
+  decline_reason        String?
+  created_by            String?
+  created_date          DateTime  @default(now())
+  updated_by            String?
+  updated_date          DateTime? @updatedAt
+  deleted_date          DateTime?
+
+  patient   User   @relation("PatientConsults", fields: [patient_id], references: [id])
+  provider User   @relation("ProviderConsults", fields: [provider_id], references: [id])
+  payment   Payment?
+  report    Report?
+
+  
+  provider_specialty ProviderSpecialty? @relation(fields: [provider_specialty_id], references: [id])
+
+  // Medical history (linked to SpecialtyForHistory)
+  medical_history ConsultMedicalHistory?
+
+  consult_specialty_conditions    ConsultSpecialtyCondition[]
+  consult_specialty_symptoms ConsultSpecialtySymptom[]
+   
+  consult_images ConsultImage[]
+}
+
+model ConsultImage {
+  id  String  @id @default(uuid())
+  consult_id String
+  image_path    String
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime?
+
+  consult Consult @relation(fields: [consult_id], references: [id])  
+}
+
+model RedFlag{
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime?
+
+  specialty_red_flags SpecialtyRedFlag[]
+}
+
+model SpecialtyRedFlag{
+  id          String   @id @default(uuid())  
+  specialty_id String
+  red_flag_id String
+  order Int?
+  created_by  String?
+  created_date DateTime  @default(now())
+  updated_by  String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime? 
+
+  redFlag RedFlag @relation(fields: [red_flag_id], references: [id])
+  specialty Specialty @relation(fields: [specialty_id], references: [id])
+
+  @@unique([specialty_id, red_flag_id], name: "specialty_id_red_flag_id")
+
+}
+
+
+model Payment {
+  consult_id   String  @id  
+  payment_intent_id String
+  amount_cents   Decimal? @db.Decimal(10,2)
+  preauth_date     DateTime?
+  captured_date    DateTime?
+  refunded_date    DateTime?
+  refund_reason  String?
+  created_by     String?
+  created_date   DateTime  @default(now())
+  updated_by     String?
+  updated_date   DateTime? @updatedAt
+  deleted_date   DateTime?
+
+  consult Consult @relation(fields: [consult_id], references: [id])
+}
+
+model Report {
+  consult_id            String @id
+  overview              String
+  differentials_general String
+  self_care_general     String
+  when_to_seek_care     String
+  report_status      ReportStatus @default(ISDRAFT)
+  signed_by             String?
+  signed_date             DateTime?
+  addenda_json          Json?
+  created_by            String?
+  created_date          DateTime  @default(now())
+  updated_by            String?
+  updated_date          DateTime? @updatedAt
+  deleted_date          DateTime?
+
+  consult Consult @relation(fields: [consult_id], references: [id])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actor_id     String
+  actor_role   UserRole
+  action       String
+  object_type  String
+  object_id    String
+  ts           DateTime @default(now())
+  ip           String?
+  metadata_json Json?
+  created_by   String?
+  created_date DateTime  @default(now())
+  updated_by   String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime?
+
+  actor        User @relation("Actor", fields: [actor_id], references: [id])
+}
+
+model Template {
+  id          String               @id @default(uuid())
+  name        String               @unique
+  description String?
+  channel     NotificationChannel
+
+  subject     String?
+  textBody    String?
+  htmlBody    String?
+
+  isActive    Boolean              @default(true)
+
+  created_by   String?
+  created_date DateTime  @default(now())
+  updated_by   String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime?
+
+  notifications Notification[]
+}
+
+model Notification {
+  id                String               @id @default(uuid())
+
+  userId            String?
+  templateId        String
+  template          Template            @relation(fields: [templateId], references: [id])
+
+  channel           NotificationChannel
+  provider          NotificationProvider
+
+  recipient         String
+  subject           String?
+  body              String
+  format            TemplateFormat
+  variables         Json?
+
+  notificationProviderMessageId String?
+  errorMessage      String?
+  status            NotificationStatus    @default(PENDING)
+
+  sentAt          DateTime?
+  created_by   String?
+  created_date DateTime  @default(now())
+  updated_by   String?
+  updated_date DateTime? @updatedAt
+  deleted_date DateTime?
+
+  @@index([templateId])
+  @@index([recipient])
+  @@index([status])
+}
