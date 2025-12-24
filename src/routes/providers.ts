@@ -3,7 +3,7 @@ import express from 'express';
 import { ProviderController } from '../controllers/provider.controller.js';
 import { auditLog } from '../middleware/auditLog.js';
 import { authenticate } from '../middleware/auth.js';
-//import { upload } from '../middleware/upload.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 const providerController = new ProviderController();
@@ -16,7 +16,7 @@ router.get('/providers', providerController.list);
 // 2. SPECIFIC ROUTES (These must come first)
 router.get('/providers/settings', authenticate, providerController.getSettings); // Your specific route
 router.put("/providers/settings", authenticate, auditLog("UPDATE", "settings"), providerController.updateSettings);
-//router.post("/providers/settings/upload-photo", authenticate,  upload.single("photo"),  providerController.uploadPhoto);
+router.post("/providers/settings/upload-photo", authenticate,  upload.single("photo"),  providerController.uploadPhoto);
 
 
 // 3. DYNAMIC ROUTES (These must come after the specific ones)

@@ -9,6 +9,15 @@ provider:
   stage: prod
   timeout: 30
   memorySize: 1024
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource: arn:aws:s3:::curoo-uploads-profile/*
 
   environment:
     NODE_ENV: production
@@ -21,10 +30,12 @@ provider:
     VITE_BASE_URL: ${env:VITE_BASE_URL}
     JWT_EXPIRATION: ${env:JWT_EXPIRATION}    
     CONSULT_EXPIRE_HOURS: ${env:CONSULT_EXPIRE_HOURS}
+    UPLOADS_BUCKET: curoo-uploads-profile
 
 functions:
   api:
     handler: dist/server.handler
+    timeout: 25
     events:
       - httpApi:
           path: /api/{proxy+}

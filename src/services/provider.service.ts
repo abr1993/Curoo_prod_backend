@@ -324,10 +324,10 @@ class ProviderService {
           availableSpecialties
         };
       }
-  async upload(relativePath:string, providerId: string){
+  async upload(image_url:string, providerId: string){
     const updated = await prisma.provider.update({
           where: { user_id: providerId },
-          data: { avatar: relativePath },
+          data: { avatar: image_url },
           select: { avatar: true },
         });
         return updated.avatar;

@@ -10,6 +10,10 @@ const __dirname = /* path.dirname(__filename); */"";
 
 const uploadDir = "";
 
+export const upload = multer({
+  storage: multer.memoryStorage(),
+});
+
 /* if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 } */
