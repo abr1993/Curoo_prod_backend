@@ -279,7 +279,20 @@ class ProviderService {
                     name: true,
                   },
                 },
-                provider_license: true,
+                provider_license: {
+                  where: {
+                    deleted_date: null, // Only fetch licenses that aren't deleted
+                  },
+                  
+                  select: {
+                    id: true,
+                    is_available: true,
+                    state: true,
+                    price_cents: true,
+                    daily_cap: true             
+                    
+                  }
+                },
               }              
             },
           },
