@@ -39,7 +39,14 @@ functions:
     events:
       - httpApi:
           path: /api/{proxy+}
-          method: ANY                
+          method: ANY   
+
+  hourlyCron:
+    handler: dist/cron/handler.handler
+    timeout: 60
+    events:
+      - eventBridge:
+          schedule: cron(0 * * * ? *)
 
 plugins:
   - serverless-esbuild
