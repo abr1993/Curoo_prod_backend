@@ -42,5 +42,7 @@ router.post("/consults/:id/decline", authenticate, auditLog("DECLINE", "consult"
 router.post("/consults/:id/delete", authenticate, auditLog("DELETE", "consult"), consultController.delete);
 
 router.get("/report/:id", authenticate, consultController.getReport)
+router.get("/consult/:id/provider", authenticate, consultController.getConsultProvider)
+
 
 export default router;

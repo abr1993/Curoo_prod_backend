@@ -195,6 +195,11 @@ export class ConsultService {
         provider: {
           select:{ id: true, email: true }
         },
+        provider_specialty:{
+          select:{
+            provider: true
+          }
+        }
         
       },
     });
@@ -256,6 +261,7 @@ export class ConsultService {
       id: consult.id,
       patient: consult.patient, // only email 
       provider: consult.provider, // only email 
+      provider_name: consult.provider_specialty?.provider.display_name,
       topics: consult_specialty_conditions,
       question_body: consult.question_body,
       date_of_birth: consult.date_of_birth,
@@ -275,6 +281,24 @@ export class ConsultService {
       consult_specialty_symptoms,
     };
     
+  }
+
+  async getProviderByConsultId(consultId: string){
+      const provider = await prisma.consult.findFirst({
+        where: {
+          id: consultId
+        },
+        select:{
+          provider_specialty:{
+            select:{
+              provider:true
+            }
+          }
+        }
+      });
+
+      return provider?.provider_specialty?.provider.display_name;
+
   }
 
    getInitials(fullName: string): string {

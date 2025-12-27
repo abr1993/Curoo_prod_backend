@@ -18,6 +18,21 @@ export class ConsultController {
     
   }
 
+  async getConsultProvider(req: AuthRequest, res: Response) {
+    const { id} = req.params;
+    if (!id) {
+        return res.status(400).json({ error: "Consult ID is required" });
+    }
+    try{
+      
+      const provider = await consultService.getProviderByConsultId(id);
+      res.json(provider);
+    }catch(err:any){
+       res.status(500).json({ error: err.message || "provider not found" });
+    }
+    
+  }
+
   async getById(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const {role} = req.user!;
