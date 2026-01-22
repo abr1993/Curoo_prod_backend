@@ -1,11 +1,11 @@
-import { PrismaClient, FieldType } from "@prisma/client";
+import { PrismaClient, FieldType, UserRole } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("🌱 Starting seed...");
 
   // --- 1️⃣ Create Specialties ---
-  /*  const ophthalmology = await prisma.specialty.upsert({
+   const ophthalmology = await prisma.specialty.upsert({
     where: { name: "Ophthalmology" },
     update: {},
     create: {
@@ -14,7 +14,7 @@ async function main() {
     },
   });
 
-  const cardiology = await prisma.specialty.upsert({
+  /* const cardiology = await prisma.specialty.upsert({
     where: { name: "Cardiology" },
     update: {},
     create: {
@@ -30,7 +30,7 @@ async function main() {
       name: "Internal Medicine",
       description: "prevention, diagnosis, and treatment of diseases in adults",
     },
-  });
+  }); */
 
   // --- 2️⃣ Link SpecialtyForHistory templates (assuming you already seeded them before) ---
   const ophthalmologyHistory = await prisma.specialtyForHistory.create({
@@ -84,7 +84,7 @@ async function main() {
       },
     },
   });
-  const cardiologyHistory = await prisma.specialtyForHistory.create({
+  /* const cardiologyHistory = await prisma.specialtyForHistory.create({
     data: {
       name: "Cardiology",
       description: "Heart-related care and medical history",
@@ -181,16 +181,16 @@ async function main() {
         ],
       },
     },
-  });
+  }); */
   const ophHistoryTemplate = await prisma.specialtyForHistory.findFirst({
     where: { name: "Ophthalmology" },
   });
-  const cardioHistoryTemplate = await prisma.specialtyForHistory.findFirst({
+  /* const cardioHistoryTemplate = await prisma.specialtyForHistory.findFirst({
     where: { name: "Cardiology" },
   });
   const internalMedicineHistoryTemplate = await prisma.specialtyForHistory.findFirst({
     where: { name: "Internal Medicine" },
-  });
+  }); */
 
   if (ophHistoryTemplate)
     await prisma.specialty.update({
@@ -198,7 +198,7 @@ async function main() {
       data: { history_template_id: ophHistoryTemplate.id },
     });
 
-  if (cardioHistoryTemplate)
+  /* if (cardioHistoryTemplate)
     await prisma.specialty.update({
       where: { id: cardiology.id },
       data: { history_template_id: cardioHistoryTemplate.id },
@@ -208,10 +208,10 @@ async function main() {
     await prisma.specialty.update({
       where: { id: internalMedicine.id },
       data: { history_template_id: internalMedicineHistoryTemplate.id },
-    });
+    }); */
 
   // --- 3️⃣ Create Users (Providers) ---
-  const drAlex = await prisma.user.create({
+  /* const drAlex = await prisma.user.create({
     data: {
       role: "PROVIDER",
       email: "alex.johnson@example.com",
@@ -248,18 +248,38 @@ async function main() {
         },
       },
     },
-  });
+  }); */
   const drEnoch = await prisma.user.create({
     data: {
-      role: "PROVIDER",
+      role: UserRole.PROVIDER,
       email: "team@curooapp.com",
       phone: "317-338-2345",
       provider: {
         create: {
           display_name: "Dr. Enoch Kassa",
-          avatar: "uploads/providers/enoch_kassa.jpeg"
+          
         },
       },
+    },
+  });
+/*    const drAlex = await prisma.user.create({
+    data: {
+      role: UserRole.PROVIDER,
+      email: "alex.johnson@example.com",
+      phone: "555-1111",
+      provider: {
+        create: {
+          display_name: "Dr. Alex Johnson",
+        },
+      },
+    },
+  }); */
+  const system = await prisma.user.create({
+    data: {
+      role: UserRole.SYSTEM,
+      email: "system@curooapp.com",
+      phone: "000-000-0000",
+      
     },
   });
   
@@ -272,7 +292,13 @@ async function main() {
       specialty_id: ophthalmology.id,
     },
   });
-  const enochIMSpec = await prisma.providerSpecialty.create({
+  /* const alexOphSpec = await prisma.providerSpecialty.create({
+    data: {
+      provider_id: drAlex.id,
+      specialty_id: ophthalmology.id,
+    },
+  }); */
+  /* const enochIMSpec = await prisma.providerSpecialty.create({
     data: {
       provider_id: drEnoch.id,
       specialty_id: internalMedicine.id,
@@ -297,12 +323,12 @@ async function main() {
       provider_id: drRichard.id,
       specialty_id: cardiology.id,
     },
-  });
+  }); */
 
   // --- 5️⃣ Create Provider Licenses ---
   await prisma.providerLicense.createMany({
     data: [
-      {
+      /* {
         provider_specialty_id: alexOphSpec.id,
         provider_id: drAlex.id,
         state: "CA",
@@ -329,7 +355,7 @@ async function main() {
         state: "TX",
         price_cents: 15000,
         daily_cap: 8,
-      },
+      }, */
       {
         provider_specialty_id: enochOphSpec.id,
         provider_id: drEnoch.id,
@@ -337,7 +363,14 @@ async function main() {
         price_cents: 10000,
         daily_cap: 10,
       },
-      {
+      /* {
+        provider_specialty_id: alexOphSpec.id,
+        provider_id: drAlex.id,
+        state: "IN",
+        price_cents: 12000,
+        daily_cap: 10,
+      }, */
+      /* {
         provider_specialty_id: enochIMSpec.id,
         provider_id: drEnoch.id,
         state: "IN",
@@ -350,7 +383,7 @@ async function main() {
         state: "CA",
         price_cents: 12000,
         daily_cap: 10,
-      },
+      }, */
     ],
   });
 
@@ -361,7 +394,11 @@ async function main() {
       { name: "Red or irritated eye", description: "Inflamed or red eye" },
       { name: "Stye or eyelid bump", description: "Eyelid inflammation or bump" },
       { name: "Eyelid lesion or growth", description: "Abnormal growth on eyelid" },
-      { name: "Other Eye Condition", description: "Other eye condition" },
+      { name: "Glaucoma", description: "Optic nerve pressure damage" },
+      { name: "Cataract", description: "Clouding of eye lens" },
+      { name: "Eye Surgeries", description: "Corrective ocular procedures" },
+      { name: "Macular Degeneration", description: "Central vision deterioration" },
+      
     ],
     skipDuplicates: true,
   });
@@ -377,7 +414,7 @@ async function main() {
   });
 
   // --- 7️⃣ Cardiology Conditions & Symptoms ---
-  const cardioConditions = await prisma.condition.createMany({
+ /*  const cardioConditions = await prisma.condition.createMany({
     data: [
       { name: "Hypertension", description: "High blood pressure" },
       { name: "Arrhythmia", description: "Irregular heartbeat" },
@@ -414,12 +451,12 @@ async function main() {
       { name: "Rash or skin changes", description: "Rash or skin changes" }
     ],
     skipDuplicates: true,
-  });
+  }); */
 
   // --- 8️⃣ Map specialties <-> conditions/symptoms ---
   // Ophthalmology
   const allOphConditions = await prisma.condition.findMany({
-    where: { name: { in: ["Dry eye symptoms", "Red or irritated eye", "Stye or eyelid bump", "Eyelid lesion or growth", "Other Eye Condition"] } },
+    where: { name: { in: ["Dry eye symptoms", "Red or irritated eye", "Stye or eyelid bump", "Eyelid lesion or growth","Glaucoma", "Cataract", "Eye Surgeries", "Macular Degeneration"] } },
   });
   const allOphSymptoms = await prisma.symptom.findMany({
     where: { name: { in: ["Pain", "Light_sensitivity", "Redness", "Blur"] } },
@@ -444,7 +481,7 @@ async function main() {
   }
 
   // Cardiology
-  const allCardioConditions = await prisma.condition.findMany({
+  /* const allCardioConditions = await prisma.condition.findMany({
     where: { name: { in: ["Hypertension", "Arrhythmia", "Heart failure"] } },
   });
   const allCardioSymptoms = await prisma.symptom.findMany({
@@ -492,12 +529,14 @@ async function main() {
         symptom_id: s.id,
       },
     });
-  } 
+  }  */
 
-  if (!ophthalmology || !cardiology || !internalMedicine) {
+  /* if (!ophthalmology || !cardiology || !internalMedicine) {
+    throw new Error('Required specialties not found in database.');
+  } */
+ if (!ophthalmology ) {
     throw new Error('Required specialties not found in database.');
   }
-
   // ✅ Ophthalmology Red Flags
   const ophthalmologyRedFlags = [
     'Severe eye pain',
@@ -509,7 +548,7 @@ async function main() {
   ];
 
   // ✅ Cardiology Red Flags
-  const cardiologyRedFlags = [
+  /* const cardiologyRedFlags = [
     'Chest pain radiating to arm, jaw, or back',
     'Shortness of breath at rest or with minimal exertion',
     'Fainting (syncope) or near-syncope during activity',
@@ -523,7 +562,7 @@ async function main() {
     'Abdominal pain or bloating',
     'Joint pain or stiffness',
     'Seizure'
-  ];
+  ]; */
 
   // Helper function to create red flags + linking table entries
   async function createRedFlagsForSpecialty(specialtyId: string, flags: string[]) {
@@ -547,13 +586,48 @@ async function main() {
 
   // Seed both specialties
   await createRedFlagsForSpecialty(ophthalmology.id, ophthalmologyRedFlags);
-  await createRedFlagsForSpecialty(cardiology.id, cardiologyRedFlags);
-  await createRedFlagsForSpecialty(internalMedicine.id, internalMedicineRedFlags); */
+  //await createRedFlagsForSpecialty(cardiology.id, cardiologyRedFlags);
+//  await createRedFlagsForSpecialty(internalMedicine.id, internalMedicineRedFlags);  
 
-  /* 
   await prisma.template.upsert({
     where: { name: "OTP_CODE" },
-    update: {},
+    update: {      
+      description: "Used for login / signup / verification codes",      
+      subject: "Your verification code",
+      textBody: `Hello {{name}},
+
+        Your verification code is: {{otp}}
+
+        This code expires in {{expiresIn}} minutes.
+        Thank you,
+        Curoo
+        `,
+      htmlBody: `
+          <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+            <p style="font-size: 14px; margin: 0 0 12px 0;">
+              Hello {{name}},
+            </p>
+
+            <p style="font-size: 14px; margin: 0 0 12px 0;">
+              Your verification code is:
+            </p>
+
+            <p style="font-size: 20px; font-weight: 600; letter-spacing: 4px; margin: 0 0 12px 0;">
+              {{otp}}
+            </p>
+
+            <p style="font-size: 13px; color: #4b5563; margin: 0 0 20px 0;">
+              This code expires in <strong>{{expiresIn}} minutes</strong>.
+            </p>
+
+            <p style="font-size: 14px; margin: 0;">
+              Thank you,<br />
+              <strong>Curoo</strong>
+            </p>
+          </div>
+              `
+
+    },
     create: {
       name: "OTP_CODE",
       description: "Used for login / signup / verification codes",
@@ -561,162 +635,38 @@ async function main() {
       subject: "Your verification code",
       textBody: `Hello {{name}},
 
-Your verification code is: {{otp}}
+        Your verification code is: {{otp}}
 
-It will expire in {{expiresIn}} minutes.
-`,
+        This code expires in {{expiresIn}} minutes.
+        Thank you,
+        Curoo
+        `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello {{name}},</h2>
-          <p>Your verification code is:</p>
-          <h1 style="letter-spacing: 5px;">{{otp}}</h1>
-          <p>This code expires in {{expiresIn}} minutes.</p>
-        </div>
-      `
-    }
-  });
-  // 2. CONSULT SUBMITTED
-  await prisma.template.upsert({
-    where: { name: "CONSULT_SUBMITTED" },
-    update: {},
-    create: {
-      name: "CONSULT_SUBMITTED",
-      description: "Sent when a consult is submitted by a patient",
-      channel: "EMAIL",
-      subject: "You have recieved a consult.",
-      textBody: `Hello {{name}},
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+            <p style="font-size: 14px; margin: 0 0 12px 0;">
+              Hello {{name}},
+            </p>
 
-            We’re reaching out to inform you that you have recieved a consult from a patient on curoo.
+            <p style="font-size: 14px; margin: 0 0 12px 0;">
+              Your verification code is:
+            </p>
 
-            You can view it here:
-            {{consultLink}}
+            <p style="font-size: 20px; font-weight: 600; letter-spacing: 4px; margin: 0 0 12px 0;">
+              {{otp}}
+            </p>
 
-            Best regards,
-              Curoo
-            `,
-      htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello {{name}},</h2>
-          <p>We’re reaching out to inform you that you have recieved a consult from a patient on curoo.</p>
-          <p>You can view the consult request by following the link below:</p>
-          <a href="{{consultLink}}">{{consultLink}}</a>
-          <p>Best regards, Curoo</p>
-        </div>
-      `
-    }
-  });
+            <p style="font-size: 13px; color: #4b5563; margin: 0 0 20px 0;">
+              This code expires in <strong>{{expiresIn}} minutes</strong>.
+            </p>
 
-  // 3. CONSULT ANSWERED
-  await prisma.template.upsert({
-    where: { name: "CONSULT_ANSWERED" },
-    update: {},
-    create: {
-      name: "CONSULT_ANSWERED",
-      description: "Sent when a provider answers a consult",
-      channel: "EMAIL",
-      subject: "Your consult has been answered",
-      textBody: `Hello {{name}},
-
-              We’re reaching out to inform you that your consult has been answered by the provider.
-
-              You can view the provider's response by following the link below:
-              {{consultLink}}
-
-              Thank you for using our service. Should you have any further questions, please don't hesitate to reach out.
-
-              Best regards,
-              Curoo
-              `,
-      htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello {{name}},</h2>
-          <p>We’re reaching out to inform you that your consult has been answered by the provider.</p>
-          <p>You can view the provider's response by following the link below:</p>
-
-          <a href="{{consultLink}}">{{consultLink}}</a>
-          <p>Thank you for using our service. Should you have any further questions, please don't hesitate to reach out.</p>
-          <p>Best regards, Curoo</p>
-        </div>
-      `
-    }
-  });
-
-  // 4. CONSULT EXPIRED
-  await prisma.template.upsert({
-    where: { name: "CONSULT_REQUEST_EXPIRED" },
-    update: {},
-    create: {
-      name: "CONSULT_REQUEST_EXPIRED",
-      description: "Sent when a consult expires without response",
-      channel: "EMAIL",
-      subject: "Your consult has expired",
-      textBody: `Hello {{name}},
-
-              We’re reaching out to let you know that your consult request to Dr. {{doctorLastName}} has expired, as it was not answered within {{expiryTime}}.
-              If you still require assistance, you may submit a new consult request at any time.
-                Thank you,
-                Curoo              
-              `,
-      htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello {{name}},</h2>
-          <p>We’re reaching out to let you know that your consult request to Dr. {{doctorLastName}} has expired, as it was not answered within {{expiryTime}}.</p>
-          <p>If you still require assistance, you may submit a new consult request at any time.</p>
-          <p>Thank you, Curoo </p>
-        </div>
-      `
-    }
-  });
-  await prisma.template.upsert({
-    where: { name: "CONSULT_EXPIRED" },
-    update: {},
-    create: {
-      name: "CONSULT_EXPIRED",
-      description: "Sent when a consult expires without response",
-      channel: "EMAIL",
-      subject: "Your consult has expired",
-      textBody: `Hello {{name}},
-
-              We’re reaching out to let you know that the consult request with consult ID {{consultId}} assigned to you has now expired after remaining unanswered for {{expiryTime}}.
-              
-                Thank you,
-                Curoo              
-              `,
-      htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello {{name}},</h2>
-          <p>We’re reaching out to let you know that the consult request with consult ID {{consultId}} assigned to you has now expired after remaining unanswered for {{expiryTime}}.</p>
-          
-          <p>Thank you, Curoo </p>
-        </div>
-      `
-    }
-  });
-  await prisma.template.upsert({
-    where: { name: "CONSULT_DECLINED" },
-    update: {},
-    create: {
-      name: "CONSULT_DECLINED",
-      description: "Sent when a consult is declined by the provider",
-      channel: "EMAIL",
-      subject: "Your consult has been declined",
-      textBody: `Hello {{name}},
-
-              We’re reaching out to let you know that your consult request to Dr. {{doctorLastName}} has been declined.
-              If you still require assistance, you may submit a new consult request at any time.
-                Thank you,
-                Curoo             
-              `,
-      htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello {{name}},</h2>
-          <p>We’re reaching out to let you know that your consult request to Dr. {{doctorLastName}} has been declined.</p>
-          <p>If you still require assistance, you may submit a new consult request at any time.</p>
-          <p>Thank you, Curoo </p>
-        </div>
-      `
-    }
-  }); */
+            <p style="font-size: 14px; margin: 0;">
+              Thank you,<br />
+              <strong>Curoo</strong>
+            </p>
+          </div>
+              `
+            }
+          });
   
   // 2. CONSULT SUBMITTED
   await prisma.template.upsert({
@@ -726,22 +676,42 @@ It will expire in {{expiresIn}} minutes.
       subject: "You have recieved a consult.",
       textBody: `Hello,
 
-            We’re reaching out to inform you that you have recieved a consult from a patient on curoo.
+            We’re reaching out to inform you that you have recieved a consult from a patient on Curoo.
 
-            You can view it here:
+            You can view the consult request by following the link below:
             {{consultLink}}
 
-            Best regards,
+            Thank You,
               Curoo
             `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to inform you that you have recieved a consult from a patient on curoo.</p>
-          <p>You can view the consult request by following the link below:</p>
-          <a href="{{consultLink}}">{{consultLink}}</a>
-          <p>Best regards, Curoo</p>
-        </div>
+      <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+        <p style="font-size: 14px; margin: 0 0 12px 0;">
+          Hello,
+        </p>
+
+        <p style="font-size: 14px; margin: 0 0 12px 0;">
+          We’re reaching out to inform you that you have recieved a consult from a patient on Curoo.
+        </p>
+
+        <p style="font-size: 14px; margin: 0 0 12px 0;">
+          You can view the consult request by following the link below:
+        </p>
+
+        <p style="margin: 0 0 20px 0;">
+          <a
+            href="{{consultLink}}"
+            style="font-size: 14px; color: #2563eb; text-decoration: none;"
+          >
+            View Consult
+          </a>
+        </p>
+
+        <p style="font-size: 14px; margin: 0;">
+          Thank you,<br />
+          <strong>Curoo</strong>
+        </p>
+      </div>        
       `
     },
     create: {
@@ -753,20 +723,40 @@ It will expire in {{expiresIn}} minutes.
 
             We’re reaching out to inform you that you have recieved a consult from a patient on curoo.
 
-            You can view it here:
+            You can view the consult request by following the link below:
             {{consultLink}}
 
-            Best regards,
+            Thank you,
               Curoo
             `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to inform you that you have recieved a consult from a patient on curoo.</p>
-          <p>You can view the consult request by following the link below:</p>
-          <a href="{{consultLink}}">{{consultLink}}</a>
-          <p>Best regards, Curoo</p>
-        </div>
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+        <p style="font-size: 14px; margin: 0 0 12px 0;">
+          Hello,
+        </p>
+
+        <p style="font-size: 14px; margin: 0 0 12px 0;">
+          We’re reaching out to inform you that you have recieved a consult from a patient on Curoo.
+        </p>
+
+        <p style="font-size: 14px; margin: 0 0 12px 0;">
+          You can view the consult request by following the link below:
+        </p>
+
+        <p style="margin: 0 0 20px 0;">
+          <a
+            href="{{consultLink}}"
+            style="font-size: 14px; color: #2563eb; text-decoration: none;"
+          >
+            View Consult
+          </a>
+        </p>
+
+        <p style="font-size: 14px; margin: 0;">
+          Thank you,<br />
+          <strong>Curoo</strong>
+        </p>
+      </div>  
       `
     }
   });
@@ -785,20 +775,38 @@ It will expire in {{expiresIn}} minutes.
               {{consultLink}}
 
               Thank you for using our service. Should you have any further questions, please don't hesitate to reach out.
-
-              Best regards,
+              
               Curoo
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to inform you that your consult has been answered by the provider.</p>
-          <p>You can view the provider's response by following the link below:</p>
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
 
-          <a href="{{consultLink}}">{{consultLink}}</a>
-          <p>Thank you for using our service. Should you have any further questions, please don't hesitate to reach out.</p>
-          <p>Best regards, Curoo</p>
-        </div>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to inform you that your consult has been answered by the provider.
+          </p>
+
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            You can view the provider's response by following the link below:
+          </p>
+
+          <p style="margin: 0 0 20px 0;">
+            <a
+              href="{{consultLink}}"
+              style="font-size: 14px; color: #2563eb; text-decoration: none;"
+            >
+              View Answer
+            </a>
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Thank you for using our service. Should you have any further questions, please don't hesitate to reach out.
+          </p>
+          <p style="font-size: 14px; margin: 0;">            
+            <strong>Curoo</strong>
+          </p>
+        </div>         
       `
     },
     create: {
@@ -814,20 +822,38 @@ It will expire in {{expiresIn}} minutes.
               {{consultLink}}
 
               Thank you for using our service. Should you have any further questions, please don't hesitate to reach out.
-
-              Best regards,
+              
               Curoo
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to inform you that your consult has been answered by the provider.</p>
-          <p>You can view the provider's response by following the link below:</p>
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
 
-          <a href="{{consultLink}}">{{consultLink}}</a>
-          <p>Thank you for using our service. Should you have any further questions, please don't hesitate to reach out.</p>
-          <p>Best regards, Curoo</p>
-        </div>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to inform you that your consult has been answered by the provider.
+          </p>
+
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            You can view the provider's response by following the link below:
+          </p>
+
+          <p style="margin: 0 0 20px 0;">
+            <a
+              href="{{consultLink}}"
+              style="font-size: 14px; color: #2563eb; text-decoration: none;"
+            >
+              View Answer
+            </a>
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Thank you for using our service. Should you have any further questions, please don't hesitate to reach out.
+          </p>
+          <p style="font-size: 14px; margin: 0;">            
+            <strong>Curoo</strong>
+          </p>
+        </div> 
       `
     }
   });
@@ -846,12 +872,21 @@ It will expire in {{expiresIn}} minutes.
                 Curoo              
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to let you know that your consult request has expired, as it was not answered within {{expiryTime}}.</p>
-          <p>If you still require assistance, you may submit a new consult request at any time.</p>
-          <p>Thank you, Curoo </p>
-        </div>
+      <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that your consult request has expired, as it was not answered within {{expiryTime}}.
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            If you still require assistance, you may submit a new consult request at any time.
+          </p>          
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div>        
       `
     },
     create: {
@@ -867,12 +902,21 @@ It will expire in {{expiresIn}} minutes.
                 Curoo              
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to let you know that your consult request has expired, as it was not answered within {{expiryTime}}.</p>
-          <p>If you still require assistance, you may submit a new consult request at any time.</p>
-          <p>Thank you, Curoo </p>
-        </div>
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that your consult request has expired, as it was not answered within {{expiryTime}}.
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            If you still require assistance, you may submit a new consult request at any time.
+          </p>          
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div> 
       `
     }
   });
@@ -889,12 +933,18 @@ It will expire in {{expiresIn}} minutes.
                 Curoo              
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to let you know that the consult request with consult ID {{consultId}} assigned to you has now expired after remaining unanswered for {{expiryTime}}.</p>
-          
-          <p>Thank you, Curoo </p>
-        </div>
+      <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that the consult request with consult ID {{consultId}} assigned to you has now expired after remaining unanswered for {{expiryTime}}.
+          </p>                    
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div>          
       `
     },
     create: {
@@ -910,12 +960,18 @@ It will expire in {{expiresIn}} minutes.
                 Curoo              
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to let you know that the consult request with consult ID {{consultId}} assigned to you has now expired after remaining unanswered for {{expiryTime}}.</p>
-          
-          <p>Thank you, Curoo </p>
-        </div>
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that the consult request with consult ID {{consultId}} assigned to you has now expired after remaining unanswered for {{expiryTime}}.
+          </p>                    
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div> 
       `
     }
   });
@@ -926,18 +982,31 @@ It will expire in {{expiresIn}} minutes.
       subject: "Your consult has been declined",
       textBody: `Hello,
 
-              We’re reaching out to let you know that your consult request has been declined.
+              We’re reaching out to let you know that your consult request has been declined for the following reason(s):
+              {{declineReason}}
               If you still require assistance, you may submit a new consult request at any time.
                 Thank you,
                 Curoo             
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to let you know that your consult request has been declined.</p>
-          <p>If you still require assistance, you may submit a new consult request at any time.</p>
-          <p>Thank you, Curoo </p>
-        </div>
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that your consult request has been declined by the provider for the following reason:
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            {{declineReason}}
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            If you still require assistance, you may submit a new consult request at any time.
+          </p>          
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div>         
       `
     },
     create: {
@@ -947,24 +1016,61 @@ It will expire in {{expiresIn}} minutes.
       subject: "Your consult has been declined",
       textBody: `Hello,
 
-              We’re reaching out to let you know that your consult request has been declined.
+              We’re reaching out to let you know that your consult request has been declined for the following reason(s):
+              {{declineReason}}
               If you still require assistance, you may submit a new consult request at any time.
                 Thank you,
                 Curoo             
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to let you know that your consult request has been declined.</p>
-          <p>If you still require assistance, you may submit a new consult request at any time.</p>
-          <p>Thank you, Curoo </p>
-        </div>
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that your consult request has been declined by the provider for the following reason(s):
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            {{declineReason}}
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            If you still require assistance, you may submit a new consult request at any time.
+          </p>          
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div> 
       `
     }
   });
   await prisma.template.upsert({
     where: { name: "CONSULT_ACCEPTED" },
-    update: {},
+    update: {      
+      description: "Sent when a consult is accepted by the provider",      
+      subject: "Your consult has been accepted",
+      textBody: `Hello,
+
+              We’re reaching out to let you know that your consult request has been accepted by the provider.              
+                Thank you,
+                Curoo             
+              `,
+      htmlBody: `
+      <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that your consult request has been accepted by the provider.
+          </p>
+                   
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div>           
+      `
+    },
     create: {
       name: "CONSULT_ACCEPTED",
       description: "Sent when a consult is accepted by the provider",
@@ -977,18 +1083,50 @@ It will expire in {{expiresIn}} minutes.
                 Curoo             
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to let you know that your consult request has been accepted by the provider.</p>          
-          <p>Thank you, Curoo </p>
-        </div>
+      <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that your consult request has been accepted by the provider.
+          </p>
+                   
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div>           
       `
     }
   });
 
   await prisma.template.upsert({
     where: { name: "ACCEPTED_CONSULT" },
-    update: {},
+    update: {
+      description: "Sent to provider when they accept a consult",      
+      subject: "Your have accepted a consult",
+      textBody: `Hello,
+
+              We’re reaching out to let you know that you have accepted a consult request. Please give your answer in the next {{expiryTime}} or it'll be automatically declined.             
+                Thank you,
+                Curoo              
+              `,
+      htmlBody: `
+      <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that you have accepted a consult request. Please give your answer in the next {{expiryTime}} or it'll be automatically declined.             
+          </p>
+                   
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
+        </div>           
+      `
+    },
     create: {
       name: "ACCEPTED_CONSULT",
       description: "Sent to provider when they accept a consult",
@@ -1001,29 +1139,23 @@ It will expire in {{expiresIn}} minutes.
                 Curoo             
               `,
       htmlBody: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Hello,</h2>
-          <p>We’re reaching out to let you know that your consult request has been accepted by the provider.</p>          
-          <p>Thank you, Curoo </p>
+        <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            Hello,
+          </p>
+          <p style="font-size: 14px; margin: 0 0 12px 0;">
+            We’re reaching out to let you know that you have accepted a consult request. Please give your answer in the next {{expiryTime}} or it'll be automatically declined.             
+          </p>
+                   
+          <p style="font-size: 14px; margin: 0;">            
+            Thank you,<br />
+             <strong>Curoo</strong>
+          </p>
         </div>
       `
     }
   });
   
-  await prisma.specialtyForHistory.update({
-    where: {
-      name: "Ophthalmology", 
-    },
-    data: {
-      fields: {
-
-        create: {
-          name: "Additional History",
-          type: FieldType.TEXTAREA,
-        },
-      },
-    },
-  });
   
 
   

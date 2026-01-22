@@ -60,7 +60,7 @@ class ExpireConsultsService{
         for (const consult of staleConsults) {
           
           // Update consult status
-          const result = await consultsService.decline(consult.id, "SYSTEM", true);          
+          const result = await consultsService.decline(consult.id, "SYSTEM", "Expired", true);          
           
           if(result.paymentIntentStatus === "canceled"){
               if (result.provider?.user?.email && result.patient?.email) {

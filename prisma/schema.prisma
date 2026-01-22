@@ -175,7 +175,7 @@ model Provider {
   user_id        String   @id
   display_name   String
   avatar          String?
-  
+  professional_bio String @default("")
   is_available   Boolean  @default(true)  
   
   created_by     String?

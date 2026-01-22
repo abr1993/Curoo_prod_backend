@@ -828,7 +828,7 @@ async updateConsult(input: CreateConsultInput, id: string) {
     
   }
 
-  async decline(id: string, userId: string, auto_decline = false) {
+  async decline(id: string, userId: string, reason="", auto_decline = false) {
     
     const payment = await prisma.payment.findUnique({
         where: {consult_id: id},
@@ -854,6 +854,7 @@ async updateConsult(input: CreateConsultInput, id: string) {
                       : ConsultStatus.DECLINED,
                     declined_date: auto_decline ? null : new Date(),
                     timed_out_date: auto_decline ? new Date() : null,
+                    decline_reason: reason
                   },
                 }),
                 prisma.payment.update({
@@ -901,7 +902,7 @@ async updateConsult(input: CreateConsultInput, id: string) {
                       templateName: "CONSULT_DECLINED",
                       recipient: patient?.email,
                       variables: {
-                        //name: updatedConsult.legal_name ?? patient.email,
+                        declineReason: reason,
                         //doctorLastName: provider.display_name,
                         
                       },

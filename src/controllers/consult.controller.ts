@@ -230,13 +230,14 @@ async decline(req: AuthRequest, res: Response) {
   try{
       const { id } = req.params;
       const { id: userId } = req.user!;
+      const { reason } = req.body;
       if (!id) {
         return res.status(400).json({ error: "Consult ID is required" });
       }
-      console.log("id, user id", id, userId);
+      console.log("id, user id", id, userId, reason);
 
       //const { auto_decline } = req.body;
-      const result = await consultService.decline(id, userId);
+      const result = await consultService.decline(id, userId, reason);
       if (result.paymentIntentStatus !== "canceled") {
           return res.status(400).json({
             error: "Payment decline not successful",

@@ -15,6 +15,7 @@ export interface SpecialtySettings {
 
 export interface SettingsBody {
   displayName: string;
+  professional_bio: string;
   avatar?: string;
   unavailable: boolean;
   specialties: SpecialtySettings[];

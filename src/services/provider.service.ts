@@ -7,6 +7,7 @@ import type { SettingsBody } from '../types/settings.js';
 export type ProviderListItem = {
   user_id: string;
   display_name: string;
+  professional_bio: string;
   avatar: string | null;
   specialty: string | null;
   specialty_id: String | null;
@@ -19,6 +20,7 @@ export type ProviderListItem = {
 export type ProviderSpecialtyListItem = {
   user_id: string;
   display_name: string;
+  professional_bio: string;
   avatar: string | null;
   specialty: string | null;
   specialty_id: String | null;
@@ -80,6 +82,7 @@ class ProviderService {
       user_id: ps.provider.user_id,
       display_name: ps.provider.display_name,
       avatar: ps.provider.avatar,
+      professional_bio: ps.provider.professional_bio,
       specialty: ps.specialty.name,
       specialty_id: ps.specialty.id,
       provider_specialty_id: ps.id,
@@ -100,6 +103,7 @@ class ProviderService {
       select: {
         user_id: true,
         display_name: true,
+        professional_bio: true,
         avatar: true,
         is_available: true,
         specialties: {  
@@ -134,6 +138,7 @@ class ProviderService {
             {
               user_id: p.user_id,
               display_name: p.display_name,
+              professional_bio: p.professional_bio,
               avatar: p.avatar,
               specialty: null,
               specialty_id: null,
@@ -150,6 +155,7 @@ class ProviderService {
                 (lic): ProviderListItem => ({
                   user_id: p.user_id,
                   display_name: p.display_name,
+                  professional_bio: p.professional_bio,
                   avatar: p.avatar,
                   specialty: ps.specialty?.name ?? null,
                   specialty_id: ps.specialty.id ?? null,
@@ -217,6 +223,7 @@ class ProviderService {
       return {
           user_id: specialtyWithLicenses.provider_id,
           display_name: specialtyWithLicenses.provider.display_name,
+          professional_bio: specialtyWithLicenses.provider.professional_bio,
           avatar: specialtyWithLicenses.provider.avatar,
           specialty: specialtyWithLicenses.specialty.name,
           specialty_id: specialtyWithLicenses.specialty_id,                
@@ -266,6 +273,7 @@ class ProviderService {
           select: {
             user_id: true,
             display_name: true,
+            professional_bio: true,
             avatar: true,
             is_available: true,
             specialties: {
@@ -331,6 +339,7 @@ class ProviderService {
 
         return {
           displayName: provider.display_name,
+          professional_bio: provider.professional_bio,
           avatar: provider.avatar ?? "",
           unavailable: !provider.is_available,
           specialties,
@@ -348,7 +357,7 @@ class ProviderService {
   }
 
   async update(providerId: string, data: SettingsBody) {
-  const { displayName, avatar, unavailable, specialties } = data;
+  const { displayName, professional_bio, avatar, unavailable, specialties } = data;
 
   return await prisma.$transaction(async (tx) => {
     // Update Provider base info
@@ -356,6 +365,7 @@ class ProviderService {
       where: { user_id: providerId },
       data: {
         display_name: displayName,
+        professional_bio: professional_bio,
         avatar: avatar ?? null,
         is_available: !unavailable,
         updated_by: providerId,
