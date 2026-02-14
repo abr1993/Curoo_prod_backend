@@ -257,7 +257,8 @@ async function main() {
       provider: {
         create: {
           display_name: "Dr. Enoch Kassa",
-          
+          avatar: "https://curoo-uploads-profile.s3.us-east-2.amazonaws.com/providers/enoch_kassa.jpg",
+          professional_bio: "Board-certified ophthalmologist with broad experience across the spectrum of eye disease. Performed more than 6,000 cataract surgeries, numerous minimally invasive glaucoma surgeries, blepharoplasty, and anti-VEGF injections for conditions such as macular degeneration and diabetic retinopathy. Provides in-office minor eyelid procedures for lesions. Handles high-volume routine and complex cases with an emphasis on clear explanations, careful diagnosis, and thoughtful next steps. Member of the American Academy of Ophthalmology and committed to staying current with cutting-edge technologies and advances in the field."
         },
       },
     },

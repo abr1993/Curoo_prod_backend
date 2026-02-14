@@ -19,6 +19,11 @@ import path from 'path';
 dotenv.config();
 
 const app = express();
+// Health check (important for debugging)
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 app.use(cors({
   origin: 'https://main.dw1ff597dehys.amplifyapp.com', // frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -39,10 +44,6 @@ app.use('/api', providerRoutes);
 app.use('/api', consultRoutes);
 //app.use('/api', cronRoutes);
 
-// Health check (important for debugging)
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
 
 // ✅ Export Lambda handler
 export const handler = serverless(app);

@@ -1,4 +1,4 @@
-service: express-api
+service: express-api-v2
 
 frameworkVersion: '3'
 
@@ -17,9 +17,25 @@ provider:
         - Effect: Allow
           Action:
             - s3:PutObject
+            - s3:CreateBucket
             - s3:GetObject
-            - s3:DeleteObject
+            - s3:DeleteObject            
           Resource: arn:aws:s3:::curoo-uploads-profile/*
+        
+        - Effect: Allow
+          Action:
+            - ec2:CreateNetworkInterface
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DeleteNetworkInterface
+            - ec2:AssignPrivateIpAddresses
+            - ec2:UnassignPrivateIpAddresses
+          Resource: "*"
+  vpc:
+    securityGroupIds:
+      - sg-040d555d266a4d63a
+    subnetIds:
+      - subnet-0787bc44d5a29d2a6
+      - subnet-0ed14d2f9005a4169      
 
   environment:
     NODE_ENV: production
@@ -36,7 +52,7 @@ provider:
 
 functions:
   api:
-    handler: dist/server.handler
+    handler: src/server.handler
     timeout: 25
     events:
       - httpApi:
@@ -44,24 +60,32 @@ functions:
           method: ANY   
 
   hourlyCron:
-    handler: dist/cron/handler.handler
+    handler: src/cron/handler.handler
     timeout: 60
     events:
       - eventBridge:
           schedule: cron(0 * * * ? *)
 
 plugins:
-  - serverless-esbuild
+  - serverless-esbuild  
 
 package:
+  individually: true
+  excludeDevDependencies: true
   patterns:
-    - node_modules/.prisma/**
-    - node_modules/@prisma/client/**
+    - node_modules/.prisma/client/libquery_engine-rhel-openssl-1.0.x.so.node
 
 custom:
   esbuild:
     bundle: true
-    minify: false
-    sourcemap: true
+    minify: true
+    sourcemap: false
     target: node18
     platform: node
+    concurrency: 1  
+    format: cjs
+    outputFileExtension: .js
+    external:
+      - aws-sdk
+    exclude:
+      - aws-sdk                    
