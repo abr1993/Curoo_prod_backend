@@ -37,31 +37,34 @@ class AuthService {
     // Basic email validation
     const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (!valid) throw new Error('Invalid email format');
-    const otp = this.generateOtp(6, 'numeric');
-    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);    
-
-    otpStore[normalizedEmail] = { otp, expiresAt };
-
-     console.log(`✅ OTP for ${email}: ${otp} (type: numeric, expires in ${OTP_EXPIRY_MINUTES} mins)`);
-     await notificationService.send({
-        templateName: "OTP_CODE",
-        recipient: email,
-        variables: {
-          otp: otp,
-          name: email,
-          expiresIn: OTP_EXPIRY_MINUTES
-        }
-      })
+    
+    
     // Ensure a user exists
     const user = await prisma.user.findFirst({ 
       where: { 
         email:{
-            equals: email,
+            equals: normalizedEmail,
              mode: "insensitive"
         } 
        } });
     //console.log("email user: ", user);
     if (!user) return { message: 'User not registered' };
+    
+    const otp = this.generateOtp(6, 'numeric');
+    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000); 
+    otpStore[normalizedEmail] = { otp, expiresAt };
+
+     console.log(`✅ OTP for ${email}: ${otp} (type: numeric, expires in ${OTP_EXPIRY_MINUTES} mins)`);
+     await notificationService.send({
+        templateName: "OTP_CODE",
+        recipient: normalizedEmail,
+        variables: {
+          otp: otp,
+          name: normalizedEmail,
+          expiresIn: OTP_EXPIRY_MINUTES
+        }
+      })
+    
 
     // Generate OTP
     /* const otp = this.generateOtp(6, 'numeric');

@@ -25,8 +25,8 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use(cors({
-  origin: 'https://main.dw1ff597dehys.amplifyapp.com', // frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  origin: 'https://www.curoo.health', // frontend URL
+  methods: ['Head', 'GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
