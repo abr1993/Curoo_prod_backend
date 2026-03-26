@@ -1,6 +1,7 @@
 import { PrismaClient, NotificationChannel, NotificationProvider, TemplateFormat, NotificationStatus } from "@prisma/client"
 import Handlebars from "handlebars"
 import { mailjetTransport } from "../middleware/mailjet.js"
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 
 const prisma = new PrismaClient()
 
@@ -21,15 +22,12 @@ interface SendConsultNotificationOptions {
 }
 
 class NotificationService {
-    /* async sendConsult({
-        templateName,
-        recipient,
-        consultId,
-        senderId,
-        channel = NotificationChannel.EMAIL
-    }: SendConsultNotificationOptions){
+    selectedProvider: NotificationProvider;
 
-    } */
+  
+    constructor(){
+      this.selectedProvider = NotificationProvider.AWS_SES;
+    }
 
   async send({
     templateName,
@@ -79,7 +77,7 @@ class NotificationService {
         ...(userId && { userId }),
         templateId: template.id,
         channel,
-        provider: NotificationProvider.MAILJET,
+        provider: this.selectedProvider,
         recipient,
         subject: subject ?? "",
         body: finalBody,
@@ -90,20 +88,54 @@ class NotificationService {
     })
 
     try {
-      // 4. Send email via Mailjet
-      if (channel === NotificationChannel.EMAIL) {
+       if(this.selectedProvider === NotificationProvider.AWS_SES){
+          const sesClient = new SESClient({
+            region: process.env.AWS_REGION! || "us-east-2",
+            credentials: {
+              accessKeyId: process.env.SES_ACCESS_KEY_ID!,
+              secretAccessKey: process.env.SES_SECRET_ACCESS_KEY!,
+            }
+          });
+          const command = new SendEmailCommand({
+            Destination: {
+              ToAddresses: [recipient],
+            },
+            Message: {
+              Body: {
+                Html: { Data: finalBody, Charset: "UTF-8" },
+              },
+              Subject: { Data: subject, Charset: "UTF-8" },
+            },
+            Source: process.env.SES_FROM_EMAIL, // This MUST be verified in AWS SES
+          });
 
-        await mailjetTransport.sendMail({
-          from: process.env.MAILJET_FROM_EMAIL,
-          to: recipient,
-          subject,
-          text: format === TemplateFormat.TEXT ? finalBody : undefined,
-          html: format === TemplateFormat.HTML ? finalBody : undefined
-        })
+          try {
+            const response = await sesClient.send(command);
+            console.log("Email sent successfully:", response.MessageId);
+            return response;
+          } catch (error) {
+            console.error("Failed to send email via SES:", error);
+            throw error;
+          }
 
-      } else {
-        throw new Error("Only EMAIL is implemented currently")
-      }
+        }
+        if(this.selectedProvider === NotificationProvider.MAILJET){
+            // 4. Send email via Mailjet
+            if (channel === NotificationChannel.EMAIL) {
+
+              await mailjetTransport.sendMail({
+                from: process.env.MAILJET_FROM_EMAIL,
+                to: recipient,
+                subject,
+                text: format === TemplateFormat.TEXT ? finalBody : undefined,
+                html: format === TemplateFormat.HTML ? finalBody : undefined
+              })
+
+            } else {
+              throw new Error("Only EMAIL is implemented currently")
+            }
+          
+          }
 
       // 5. Update to SENT
       await prisma.notification.update({

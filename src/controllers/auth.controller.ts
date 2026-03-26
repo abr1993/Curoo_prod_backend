@@ -3,6 +3,16 @@
 import type { Request, Response, NextFunction } from 'express';
 import authService from '../services/auth.service.js'
 
+export const checkUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    const result = await authService.checkUserExists(email);
+    res.json(result);
+  } catch (err: any) {
+    next(err);
+  }
+};
+
 export const sendOtp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.body;

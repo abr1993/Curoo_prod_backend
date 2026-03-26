@@ -1,12 +1,11 @@
 // src/services/auth.service.ts
 import prisma from '../prisma.js';
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { notificationService } from './notification.service.js';
 import { UserRole } from '@prisma/client';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const JWT_EXPIRATION = process.env.JWT_EXPIRATION || "24h"
-//const TEST_OTP = '212223';
+const JWT_SECRET = process.env.JWT_SECRET || 'JHLU0l4Xry7dORcHF224bbA6fRN83eSL6v5zMIzMQaP';
+const expiresIn = (process.env.JWT_EXPIRATION as SignOptions["expiresIn"]) || "24h"; 
 const OTP_EXPIRY_MINUTES = 5;
 
 interface User {
@@ -31,15 +30,13 @@ class AuthService {
     return otp;
   }
 
-  async sendOtp(email: string): Promise<{ message: string }> {
+  async checkUserExists(email: string){
     if (!email) throw new Error('Email is required');
     const normalizedEmail = email.trim().toLowerCase();
     // Basic email validation
     const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (!valid) throw new Error('Invalid email format');
-    
-    
-    // Ensure a user exists
+    if (!valid) throw new Error('Invalid email format');    
+
     const user = await prisma.user.findFirst({ 
       where: { 
         email:{
@@ -47,8 +44,16 @@ class AuthService {
              mode: "insensitive"
         } 
        } });
-    //console.log("email user: ", user);
-    if (!user) return { message: 'User not registered' };
+    console.log("email user: ", user);
+    return { exists: !!user };
+  }
+
+  async sendOtp(email: string): Promise<{ message: string }> {
+    if (!email) throw new Error('Email is required');
+    const normalizedEmail = email.trim().toLowerCase();
+    // Basic email validation
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!valid) throw new Error('Invalid email format');   
     
     const otp = this.generateOtp(6, 'numeric');
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000); 
@@ -63,17 +68,9 @@ class AuthService {
           name: normalizedEmail,
           expiresIn: OTP_EXPIRY_MINUTES
         }
-      })
+      })   
+
     
-
-    // Generate OTP
-    /* const otp = this.generateOtp(6, 'numeric');
-    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
-
-    otpStore[email] = { otp, expiresAt }; */
-
-    //console.log(`OTP for ${email}: ${TEST_OTP}`);
-    //console.log(`✅ OTP for ${email}: ${otp} (type: numeric, expires in ${OTP_EXPIRY_MINUTES} mins)`);
     return { message: 'OTP sent to email (check console for now)' };
   }
 
@@ -126,11 +123,11 @@ class AuthService {
       });
     }
 
-    // Generate JWT (24h)
+    // Generate JWT
     const token = jwt.sign(
       { accountId: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: "24h" } 
+      { expiresIn } 
     );
 
     return { token, user };
@@ -144,7 +141,7 @@ class AuthService {
         type: "CONSULT_LINK"
       },
       JWT_SECRET,
-      { expiresIn: "24h" }
+      { expiresIn }
     );
   }
   isVerifiedConsultLink(linkToken: string, consultId: string, userId: string){

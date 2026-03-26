@@ -49,6 +49,9 @@ provider:
     JWT_EXPIRATION: ${env:JWT_EXPIRATION}    
     CONSULT_EXPIRE_HOURS: ${env:CONSULT_EXPIRE_HOURS}
     UPLOADS_BUCKET: curoo-uploads-profile
+    SES_ACCESS_KEY_ID: ${env:SES_ACCESS_KEY_ID}
+    SES_SECRET_ACCESS_KEY: ${env:SES_SECRET_ACCESS_KEY}
+    SES_FROM_EMAIL: ${env:SES_FROM_EMAIL}
 
 functions:
   api:
